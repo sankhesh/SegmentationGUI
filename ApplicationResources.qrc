@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="Logo">
+    <file>vtkLogo.jpg</file>
+    <file>InsightLogo.gif</file>
+    <file>vxlLogo.tif</file>
+  </qresource>
+</RCC>
