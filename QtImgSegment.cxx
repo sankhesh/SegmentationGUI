@@ -1,36 +1,39 @@
-#include <QtImgSegment.h>
-
+#include "QtImgSegment.h"
 
 #include <qfiledialog.h>
 #include <vcl_cstdio.h>
-#include <vcl_string.h>
 #include <qstringlist.h>
 
-#include <itkImageFileReader.h>
-#include <itkImageToVTKImageFilter.h>
+//#include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 
-#include <vtkRenderWindow.h>
-#include <vtkImageFlip.h>
-#include <vtkInteractorStyleImage.h>
-
-typedef itk::ImageFileReader<IMPROC::baseFilter::RGBImageType> ReaderType;
+#include <vtkCamera.h>
 
 //Constructor
 QtImgSegment::QtImgSegment() :
    workingDir( "." ),
-   Connections( vtkEventQtSlotConnect::New() ),
-   ImageActor( vtkSmartPointer<vtkImageActor>::New() ),
-   Ren( vtkSmartPointer<vtkRenderer>::New() ),
-   CurrentImg( IMPROC::baseFilter::RGBImageType::New() )
+   imageReader(UTILS::ReaderType::New()),
+   //fname(""),
+   Connections( vtkEventQtSlotConnect::New() )
+   //ImageActor( NULL ),
+   //Ren( vtkSmartPointer<vtkRenderer>::New() ),
+   //CurrentImg( NULL ),
+   //SegmentedImg( NULL )
 {
 	this->setupUi(this);
-	this->Ren->AddActor(this->ImageActor);
-	this->qVTKImg->GetRenderWindow()->AddRenderer( this->Ren );
 
-	vtkSmartPointer<vtkInteractorStyleImage> style = vtkSmartPointer<vtkInteractorStyleImage>::New();
-	this->qVTKImg->GetInteractor()->SetInteractorStyle(style);
+	vtkSmartPointer<vtkCamera> cam = this->qvtk_original.Ren->GetActiveCamera();
+	this->qvtk_itk.Ren->SetActiveCamera( cam );
+	this->qvtk_vtk.Ren->SetActiveCamera( cam );
+	this->qvtk_vxl.Ren->SetActiveCamera( cam );
+
+	this->qvtk_original.AddRenderWindow( this->qvtkwidget_originalimage->GetRenderWindow() );
+	this->qvtk_itk.AddRenderWindow( this->qvtkwidget_segmentedITK->GetRenderWindow() );
+	this->qvtk_vtk.AddRenderWindow( this->qvtkwidget_segmentedVTK->GetRenderWindow() );
+	this->qvtk_vxl.AddRenderWindow( this->qvtkwidget_segmentedVXL->GetRenderWindow() );
 	
+	this->renderAll(0,true);
+
 	connect(this->actionExit,SIGNAL(triggered()),qApp,SLOT(closeAllWindows()));
 	connect(this->actionLoad_Image,SIGNAL(triggered()),this,SLOT(slotLoadImage()));
 	connect(this->actionSet_Working_Directory,SIGNAL(triggered()),this,SLOT(slotSetWorkingDirectory()));
@@ -68,12 +71,11 @@ void QtImgSegment::slotLoadImage( void )
    vcl_string fname( filename.toAscii().data() );
    vcl_cout << vcl_endl << "Loading Image file: " << fname << vcl_endl;
    
-   ReaderType::Pointer imageReader = ReaderType::New();
    imageReader->SetFileName( fname );
    try
 	{
 		imageReader->Update();
-		this->CurrentImg = imageReader->GetOutput();
+		//this->CurrentImg = imageReader->GetOutput();
 	}
    catch( itk::ExceptionObject &err )
    {
@@ -86,10 +88,16 @@ void QtImgSegment::slotLoadImage( void )
       return;
    }
 
-   this->displayImage(true);
-   this->actionLoad_Image->setDisabled( true );
-   this->actionClose_Image->setEnabled( true );
-   this->actionSave_Image->setEnabled( true );
+	this->qvtk_original.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
+	this->qvtk_itk.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
+	this->qvtk_vtk.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
+	this->qvtk_vxl.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
+
+	this->renderAll( 1, true );
+
+	this->actionLoad_Image->setDisabled( true );
+	this->actionClose_Image->setEnabled( true );
+	this->actionSave_Image->setEnabled( true );
 }
 
 void QtImgSegment::closeEvent(QCloseEvent * Event)
@@ -97,31 +105,9 @@ void QtImgSegment::closeEvent(QCloseEvent * Event)
    qApp->exit();
 }
 
-void QtImgSegment::displayImage(bool reset_camera)
-{
-	typedef itk::ImageToVTKImageFilter<IMPROC::baseFilter::RGBImageType> ImageToVTKImageFilterType;
-	ImageToVTKImageFilterType::Pointer itkTovtkFilter = ImageToVTKImageFilterType::New();
-
-	itkTovtkFilter->SetInput(this->CurrentImg);
-	
-	vtkSmartPointer<vtkImageFlip> flipY = vtkSmartPointer<vtkImageFlip>::New();
-	flipY->SetInput( itkTovtkFilter->GetOutput() );
-	flipY->SetFilteredAxis(1);
-	flipY->Update();
-
-	this->ImageActor->SetInput(flipY->GetOutput());
-	if (reset_camera)
-	{
-		this->Ren->ResetCamera();
-	}
-	this->ImageActor->SetVisibility( 1 );
-	this->qVTKImg->GetRenderWindow()->Render();
-}
-
 void QtImgSegment::slotCloseImage( void )
 {
-	this->ImageActor->SetVisibility( 0 );
-	this->qVTKImg->GetRenderWindow()->Render();
+	this->renderAll( 0, false );
 	this->actionLoad_Image->setEnabled( true );
 	this->actionClose_Image->setDisabled( true );
 	this->actionSave_Image->setDisabled( true );
@@ -135,10 +121,31 @@ void QtImgSegment::slotSaveImage( void )
       return;
 	vcl_string fname( filename.toAscii().data() );
 
-	typedef itk::ImageFileWriter<IMPROC::baseFilter::RGBImageType> writerType;
-	writerType::Pointer writer = writerType::New();
-	writer->SetInput( this->SegmentedImg );
-	//writer->SetInput( this->CurrentImg );
-	writer->SetFileName( fname );
-	writer->Update();
+	//typedef itk::ImageFileWriter<IMPROC::baseFilter::RGBImageType> writerType;
+	//writerType::Pointer writer = writerType::New();
+	//writer->SetInput( this->SegmentedImg );
+	////writer->SetInput( this->CurrentImg );
+	//writer->SetFileName( fname );
+	//writer->Update();
+}
+
+void QtImgSegment::renderAll( int visibility, bool reset_camera )
+{
+	this->qvtk_original.ImageActor->SetVisibility( visibility );
+	this->qvtk_itk.ImageActor->SetVisibility( visibility );
+	this->qvtk_vtk.ImageActor->SetVisibility( visibility );
+	this->qvtk_vxl.ImageActor->SetVisibility( visibility );
+
+	if (reset_camera)
+	{
+		this->qvtk_original.Ren->ResetCamera();
+		this->qvtk_itk.Ren->ResetCamera();
+		this->qvtk_vtk.Ren->ResetCamera();
+		this->qvtk_vxl.Ren->ResetCamera();
+	}
+
+	this->qvtk_original.RenWin->Render();
+	this->qvtk_itk.RenWin->Render();
+	this->qvtk_vtk.RenWin->Render();
+	this->qvtk_vxl.RenWin->Render();
 }

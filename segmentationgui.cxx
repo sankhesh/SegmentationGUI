@@ -4,7 +4,6 @@
  * \brief Defines main for the gui
  */
 #include "QtImgSegment.h"
-#include "utils.h"
 
 #include <qapplication.h>
 

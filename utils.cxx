@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <itkComposeRGBImageFilter.h>
 
 namespace UTILS {
 
@@ -10,7 +11,6 @@ void redirectVTKWarnings( const vcl_string &fname )
 	outwin->SetInstance( outwin );
 }
 
-//vtkSmartPointer<vtkImageActor> ITKToVTKConvert( IMPROC::baseFilter::RGBImageType::ConstPointer IP )
 vtkSmartPointer<vtkImageActor> ITKToVTKConvert( RGBImageType::ConstPointer IP )
 {
 	//typedef itk::ImageToVTKImageFilter<IMPROC::baseFilter::RGBImageType> itkImageTovtkImageFilterType;
@@ -30,9 +30,16 @@ vtkSmartPointer<vtkImageActor> ITKToVTKConvert( RGBImageType::ConstPointer IP )
 	return actor;
 }
 
-//vtkSmartPointer<vtkImageActor> ITKToVTKConvert( IMPROC::baseFilter::RGBImageType::Pointer IP )
-//{
-//   return ITKToVTKConvert( IMPROC::baseFilter::RGBImageType::ConstPointer(IP.GetPointer()) );
-//}
+RGBImageType::Pointer ComposeRGBImage( ScalarImageType::Pointer scalarImage )
+{
+	typedef itk::ComposeRGBImageFilter< ScalarImageType, RGBImageType > composefilterType;
+	composefilterType::Pointer composeFilter = composefilterType::New();
+
+	composeFilter->SetInput1( scalarImage );
+	composeFilter->SetInput2( scalarImage );
+	composeFilter->SetInput3( scalarImage );
+	composeFilter->Update();
+	return composeFilter->GetOutput();
+}
 
 } //namespace UTILS

@@ -6,13 +6,6 @@ cmake_minimum_required(VERSION 2.8)
 FIND_PACKAGE(VXL REQUIRED)
 INCLUDE(${VXL_CMAKE_DIR}/UseVXL.cmake)
 MESSAGE(STATUS "Including <${VXL_CMAKE_DIR}/UseVXL.cmake>" )
-# INCLUDE_DIRECTORIES(
-  # ${VXLCORE_INCLUDE_DIR}
-  # ${GEL_INCLUDE_DIR}
-# )
-# MESSAGE( "Including <${VXLCORE_INCLUDE_DIR}>" )
-# MESSAGE( "Including <${GEL_INCLUDE_DIR}>" )
-
 
 FIND_PACKAGE(ITK REQUIRED)
 INCLUDE(${ITK_USE_FILE})
@@ -36,6 +29,7 @@ MESSAGE(STATUS "Including <${ITKVTKGLUE_PATH}> as path for ItkVtkGlue" )
 #FIND_PATH( ITK_LIBRARY_DIRS ITKSYSTARGET REQUIRED )
 # SET( ITK_LIBRARY_DIRS ${ITK_DIR} )
 # MESSAGE( "Using <${ITK_LIBRARY_DIRS}> as path for <${ITKSYSTARGET}>" )
+
 
 FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
@@ -64,24 +58,34 @@ MESSAGE(STATUS "Including <${CMAKE_CURRENT_SOURCE_DIR}>" )
 SET( Sources
 		# cxx files
 		QtImgSegment.cxx
+		RenderBase.cxx
+		utils.cxx
+		itkCannyFilter.cxx
 )
 
 SET( MOCInputs
 		# h files
 		QtImgSegment.h
+		RenderBase.h
 		utils.h
+		itkCannyFilter.h
 )
 
 SET( UIInputs
 		QtImgSegment.ui
 )
 
+SET( ResourceFiles
+		ApplicationResources.qrc
+)
 
 QT4_WRAP_UI( UISources ${UIInputs} )
 QT4_WRAP_CPP( MOCSources ${MOCInputs} )
+QT4_ADD_RESOURCES( Resources ${ResourceFiles} )
 
 SOURCE_GROUP( "UI" FILES ${UIInputs} )
-SOURCE_GROUP( "Generated" FILES ${MOCSources} ${UISources} )
+SOURCE_GROUP( "Generated" FILES ${MOCSources} ${UISources} ${Resources} )
+SOURCE_GROUP( "QtResource" FILES ${ResourceFiles} )
 
 
 # See VXL/config/cmake/Modules/UseVXL.cmake for all the params
@@ -102,7 +106,7 @@ TARGET_LINK_LIBRARIES( gui
 					${ITK_LIBRARIES}
 )
 
-ADD_EXECUTABLE( segmentationgui segmentationgui.cxx )
+ADD_EXECUTABLE( segmentationgui segmentationgui.cxx ${Resources})
 TARGET_LINK_LIBRARIES( segmentationgui gui )
 
 SET( APPNAME segmentationgui )
@@ -118,7 +122,7 @@ ENDIF(APPLE)
 IF(WIN32)
   SET( APPNAME segmentationgui.exe )
 ENDIF(WIN32)
-# SET( APPS "\${CMAKE_INSTALL_PREFIX}/${APP_INSTALL_DIR}/${APPNAME}" )
+SET( APPS "\${CMAKE_INSTALL_PREFIX}/${APP_INSTALL_DIR}/${APPNAME}" )
 
 INSTALL( TARGETS gui segmentationgui
    BUNDLE  DESTINATION .
@@ -127,28 +131,24 @@ INSTALL( TARGETS gui segmentationgui
    ARCHIVE DESTINATION lib
 )
 
-SUBDIRS(
-		ImageProc
-		)
-		
-# INSTALL( DIRECTORY
-   # "${QT_PLUGINS_DIR}/imageformats"
-   # DESTINATION ${PLUGIN_DEST_DIR}/plugins COMPONENT Runtime
-# )
-# MESSAGE( "Sourcing Qt Shared Libraries from <${QT_PLUGINS_DIR}/imageformats> and <${QT_LIBRARY_DIRS}>" )
-# MESSAGE( "Sourcing ITK Shared Libraries from <${ITK_LIBRARY_DIRS}>" )
+INSTALL( DIRECTORY
+   "${QT_PLUGINS_DIR}/imageformats"
+   DESTINATION ${PLUGIN_DEST_DIR}/plugins COMPONENT Runtime
+)
+MESSAGE( "Sourcing Qt Shared Libraries from <${QT_PLUGINS_DIR}/imageformats> and <${QT_LIBRARY_DIRS}>" )
+MESSAGE( "Sourcing ITK Shared Libraries from <${ITK_LIBRARY_DIRS}>" )
 
-# INSTALL( CODE "
-  # file( WRITE \"\${CMAKE_INSTALL_PREFIX}/${QTCONF_DEST_DIR}/qt.conf\" \"\" )
-  # " COMPONENT Runtime
-# )
+INSTALL( CODE "
+  file( WRITE \"\${CMAKE_INSTALL_PREFIX}/${QTCONF_DEST_DIR}/qt.conf\" \"\" )
+  " COMPONENT Runtime
+)
 
-# SET( DIRS ${QT_LIBRARY_DIRS} ${ITK_LIBRARY_DIRS} )
-# INSTALL( CODE "
-  # file( GLOB_RECURSE QTPLUGINS
-    # \"\${CMAKE_INSTALL_PREFIX}/${PLUGIN_DEST_DIR}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
-  # include(BundleUtilities)
-  # fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
-  # " COMPONENT Runtime
-# )
+SET( DIRS ${QT_LIBRARY_DIRS} ${ITK_LIBRARY_DIRS} )
+INSTALL( CODE "
+  file( GLOB_RECURSE QTPLUGINS
+    \"\${CMAKE_INSTALL_PREFIX}/${PLUGIN_DEST_DIR}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+  include(BundleUtilities)
+  fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
+  " COMPONENT Runtime
+)
 
