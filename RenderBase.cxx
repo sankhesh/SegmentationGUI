@@ -62,4 +62,6 @@ void RenderImage::AddSegmentedActor( vtkSmartPointer<vtkActor> actor )
 {
 	this->ImageActor->GetProperty()->SetOpacity( 0.5 );
 	this->SegmentedActor->SetMapper( actor->GetMapper() );
+	this->SegmentedActor->GetProperty()->SetAmbient(1.0);
+	this->SegmentedActor->GetProperty()->SetDiffuse(0.0);
 }

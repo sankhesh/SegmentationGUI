@@ -63,9 +63,6 @@ vtkImgFilter::vtkImgFilter() :
 	mapper->SetInputConnection( stripFilter->GetOutputPort() );
 	mapper->ScalarVisibilityOff();
 	mapper->SetColorModeToDefault();
-
-	outputActor->GetProperty()->SetAmbient(1.0);
-	outputActor->GetProperty()->SetDiffuse(0.0);
 }
 
 

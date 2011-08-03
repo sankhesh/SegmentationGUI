@@ -77,7 +77,7 @@ void QtImgSegment::slotLoadImage( void )
 {
    //File open dialog
    QString filename;
-   filename = QFileDialog::getOpenFileName( this, "Open Image", this->workingDir, "Image Files (*.bmp *.jpg *.png *.hdr *.img *.tif)" );
+   filename = QFileDialog::getOpenFileName( this, "Open Image", this->workingDir, "Image Files (*.bmp *.jpg *.png *.hdr *.img )" );
    if (filename.isNull())
       return;
 
