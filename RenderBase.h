@@ -14,7 +14,10 @@
 #include <vtkRenderWindow.h>
 #include <vtkInteractorStyleImage.h>
 #include <vtkImageActor.h>
+#include <vtkActor.h>
 #include <vtkRenderWindowInteractor.h>
+
+#include "baseFilter.h"
 
 class RenderBase
 {
@@ -29,15 +32,23 @@ public:
 
 class RenderImage : public RenderBase
 {
+	vtkSmartPointer<vtkInteractorStyleImage> style;
 public:
 	RenderImage();
 	~RenderImage(){}
-	vtkSmartPointer<vtkInteractorStyleImage> style;
 	vtkSmartPointer<vtkImageActor> ImageActor;
+	vtkSmartPointer<vtkImageActor> SegmentedImageActor;
+	vtkSmartPointer<vtkActor> SegmentedActor;
 
 	virtual void AddRenderWindow( vtkSmartPointer<vtkRenderWindow> );
 	void AddImageActor( vtkSmartPointer<vtkImageActor> actor );
-
+	void AddSegmentedImageActor( vtkSmartPointer<vtkImageActor> actor );
+	void WriteSegmentedImage( const char * name);
+	void AddSegmentedActor( vtkSmartPointer<vtkActor> actor );
+	
+	baseFilter *base;
+	void setBase( baseFilter *baseF );
+	
 }; //class RenderImage
 
 #endif // __RENDERBASE_H__

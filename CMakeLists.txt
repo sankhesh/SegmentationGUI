@@ -60,7 +60,9 @@ SET( Sources
 		QtImgSegment.cxx
 		RenderBase.cxx
 		utils.cxx
-		itkCannyFilter.cxx
+		baseFilter.cxx
+		itkImgFilter.cxx
+		vtkImgFilter.cxx
 )
 
 SET( MOCInputs
@@ -68,7 +70,9 @@ SET( MOCInputs
 		QtImgSegment.h
 		RenderBase.h
 		utils.h
-		itkCannyFilter.h
+		baseFilter.h
+		itkImgFilter.h
+		vtkImgFilter.h
 )
 
 SET( UIInputs

@@ -24,7 +24,7 @@
        <enum>QTabWidget::Triangular</enum>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <property name="movable">
        <bool>true</bool>
@@ -119,6 +119,9 @@
             <property name="whatsThis">
              <string>Control threshold for Gaussian smoothing</string>
             </property>
+            <property name="value">
+             <number>1</number>
+            </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -145,6 +148,9 @@
             </property>
             <property name="whatsThis">
              <string>Control variance for Gaussian smoothing</string>
+            </property>
+            <property name="value">
+             <number>1</number>
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -190,6 +196,12 @@
             <property name="whatsThis">
              <string>Control the Standard deviation of gaussian kernel in the X direction in pixel units</string>
             </property>
+            <property name="maximum">
+             <number>10</number>
+            </property>
+            <property name="value">
+             <number>1</number>
+            </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -202,6 +214,12 @@
             </property>
             <property name="whatsThis">
              <string>Control the Standard deviation of gaussian kernel in the Y direction in pixel units</string>
+            </property>
+            <property name="maximum">
+             <number>10</number>
+            </property>
+            <property name="value">
+             <number>1</number>
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -230,6 +248,12 @@
             <property name="whatsThis">
              <string>Control the radius of gaussian kernel in the Y direction in pixel units</string>
             </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>15</number>
+            </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -242,6 +266,15 @@
             </property>
             <property name="whatsThis">
              <string>Control the radius of gaussian kernel in the X direction in pixel units</string>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>15</number>
+            </property>
+            <property name="value">
+             <number>1</number>
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -259,6 +292,29 @@
            <widget class="QLabel" name="label_radiusy">
             <property name="text">
              <string>Radius in Y ( pixel units )</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_vtkthresh">
+            <property name="text">
+             <string>Threshold (pixel units)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="4">
+           <widget class="QSlider" name="horizontalSlider_vtkthresh">
+            <property name="toolTip">
+             <string>Control the threshold</string>
+            </property>
+            <property name="whatsThis">
+             <string>Control the threshold</string>
+            </property>
+            <property name="value">
+             <number>1</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>

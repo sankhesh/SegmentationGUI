@@ -19,12 +19,12 @@ namespace UTILS {
 typedef itk::RGBPixel< unsigned char > PixelType;
 typedef itk::Image< PixelType, 2 > RGBImageType;
 typedef itk::ImageFileReader< RGBImageType > ReaderType;
-typedef itk::Image< unsigned short, 2 > ScalarImageType;
+typedef itk::Image< double, 2 > ScalarImageType;
 
 
 void redirectVTKWarnings( const vcl_string &fname );
 
-vtkSmartPointer<vtkImageActor> ITKToVTKConvert( RGBImageType::ConstPointer IP );
+vtkSmartPointer<vtkImageActor> ITKToVTKConvert( RGBImageType::Pointer IP );
 
 RGBImageType::Pointer ComposeRGBImage ( ScalarImageType::Pointer scalarImage );
 

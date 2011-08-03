@@ -4,17 +4,15 @@
 #include <vcl_cstdio.h>
 #include <qstringlist.h>
 
-//#include <itkImageFileReader.h>
-#include <itkImageFileWriter.h>
-
 #include <vtkCamera.h>
 
 //Constructor
 QtImgSegment::QtImgSegment() :
    workingDir( "." ),
-   imageReader(UTILS::ReaderType::New()),
    //fname(""),
-   Connections( vtkEventQtSlotConnect::New() )
+   Connections( vtkEventQtSlotConnect::New() ),
+   itkFilter( NULL ),
+   vtkFilter( NULL )
    //ImageActor( NULL ),
    //Ren( vtkSmartPointer<vtkRenderer>::New() ),
    //CurrentImg( NULL ),
@@ -31,14 +29,21 @@ QtImgSegment::QtImgSegment() :
 	this->qvtk_itk.AddRenderWindow( this->qvtkwidget_segmentedITK->GetRenderWindow() );
 	this->qvtk_vtk.AddRenderWindow( this->qvtkwidget_segmentedVTK->GetRenderWindow() );
 	this->qvtk_vxl.AddRenderWindow( this->qvtkwidget_segmentedVXL->GetRenderWindow() );
-	
-	this->renderAll(0,true);
+
+	//this->renderAll(0,true);
 
 	connect(this->actionExit,SIGNAL(triggered()),qApp,SLOT(closeAllWindows()));
 	connect(this->actionLoad_Image,SIGNAL(triggered()),this,SLOT(slotLoadImage()));
 	connect(this->actionSet_Working_Directory,SIGNAL(triggered()),this,SLOT(slotSetWorkingDirectory()));
 	connect(this->actionClose_Image,SIGNAL(triggered()),this,SLOT(slotCloseImage()));
 	connect(this->actionSave_Image,SIGNAL(triggered()),this,SLOT(slotSaveImage()));
+	connect(this->horizontalSlider_thresh,SIGNAL(valueChanged(int)),this,SLOT(slotITKthresh(int)));
+	connect(this->horizontalSlider_variance,SIGNAL(valueChanged(int)),this,SLOT(slotITKvar(int)));
+	connect(this->horizontalSlider_radiusx,SIGNAL(valueChanged(int)),this,SLOT(slotVTKradius(int)));
+	connect(this->horizontalSlider_radiusy,SIGNAL(valueChanged(int)),this,SLOT(slotVTKradius(int)));
+	connect(this->horizontalSlider_stdx,SIGNAL(valueChanged(int)),this,SLOT(slotVTKstddev(int)));
+	connect(this->horizontalSlider_stdy,SIGNAL(valueChanged(int)),this,SLOT(slotVTKstddev(int)));
+	connect(this->horizontalSlider_vtkthresh,SIGNAL(valueChanged(int)),this,SLOT(slotVTKthresh(int)));
    // connect(this->actionInstructions,SIGNAL(triggered()),this,SLOT(showInstructions()));	   
 }
 
@@ -46,6 +51,14 @@ QtImgSegment::QtImgSegment() :
 QtImgSegment::~QtImgSegment()
 {
    Connections->Delete();
+   if( this->itkFilter )
+   {
+	   delete this->itkFilter;
+   }
+   if( this->vtkFilter )
+   {
+	   delete this->vtkFilter;
+   }
 }
 
 void QtImgSegment::slotSetWorkingDirectory()
@@ -64,13 +77,13 @@ void QtImgSegment::slotLoadImage( void )
 {
    //File open dialog
    QString filename;
-   filename = QFileDialog::getOpenFileName( this, "Open Image", this->workingDir, "Image Files (*.bmp *.jpg *.png *.hdr *.img)" );
+   filename = QFileDialog::getOpenFileName( this, "Open Image", this->workingDir, "Image Files (*.bmp *.jpg *.png *.hdr *.img *.tif)" );
    if (filename.isNull())
       return;
 
    vcl_string fname( filename.toAscii().data() );
    vcl_cout << vcl_endl << "Loading Image file: " << fname << vcl_endl;
-   
+   UTILS::ReaderType::Pointer imageReader = UTILS::ReaderType::New();
    imageReader->SetFileName( fname );
    try
 	{
@@ -87,11 +100,31 @@ void QtImgSegment::slotLoadImage( void )
                << vcl_flush;
       return;
    }
-
 	this->qvtk_original.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
 	this->qvtk_itk.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
 	this->qvtk_vtk.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
 	this->qvtk_vxl.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
+
+	if (! this->itkFilter )
+	{
+		itkFilter = new itkImgFilter;
+	}
+	this->qvtk_itk.setBase( itkFilter );
+	this->itkFilter->SetInput( fname );
+	this->slotITKthresh( this->horizontalSlider_thresh->value() );
+	this->slotITKvar( this->horizontalSlider_variance->value() );
+	this->qvtk_itk.AddSegmentedImageActor( this->itkFilter->GetOutput() );
+
+	if (! this->vtkFilter )
+	{
+		vtkFilter = new vtkImgFilter;
+	}
+	this->qvtk_vtk.setBase( vtkFilter );
+	this->vtkFilter->SetInput( fname );
+	this->slotVTKradius( 0 );
+	this->slotVTKstddev( 0 );
+	this->slotVTKthresh( this->horizontalSlider_vtkthresh->value() );
+	this->qvtk_vtk.AddSegmentedActor( this->vtkFilter->getOutputActor() );
 
 	this->renderAll( 1, true );
 
@@ -108,6 +141,14 @@ void QtImgSegment::closeEvent(QCloseEvent * Event)
 void QtImgSegment::slotCloseImage( void )
 {
 	this->renderAll( 0, false );
+	if ( this->itkFilter )
+	{
+		this->itkFilter = NULL;
+	}
+	if ( this->vtkFilter )
+	{
+		this->vtkFilter = NULL;
+	}
 	this->actionLoad_Image->setEnabled( true );
 	this->actionClose_Image->setDisabled( true );
 	this->actionSave_Image->setDisabled( true );
@@ -116,17 +157,10 @@ void QtImgSegment::slotCloseImage( void )
 void QtImgSegment::slotSaveImage( void )
 {
 	QString filename;
-	filename = QFileDialog::getSaveFileName( this, "Save Segmented Image", this->workingDir, "Image Files (*.bmp *.jpg *.png *.hdr *.img)" );
+	filename = QFileDialog::getSaveFileName( this, "Save Segmented Image as ", this->workingDir, "Image Files (*.bmp *.jpg *.png *.hdr *.img)" );
 	if (filename.isNull())
       return;
-	vcl_string fname( filename.toAscii().data() );
-
-	//typedef itk::ImageFileWriter<IMPROC::baseFilter::RGBImageType> writerType;
-	//writerType::Pointer writer = writerType::New();
-	//writer->SetInput( this->SegmentedImg );
-	////writer->SetInput( this->CurrentImg );
-	//writer->SetFileName( fname );
-	//writer->Update();
+	this->qvtk_itk.WriteSegmentedImage( filename.toAscii().data() );
 }
 
 void QtImgSegment::renderAll( int visibility, bool reset_camera )
@@ -135,6 +169,12 @@ void QtImgSegment::renderAll( int visibility, bool reset_camera )
 	this->qvtk_itk.ImageActor->SetVisibility( visibility );
 	this->qvtk_vtk.ImageActor->SetVisibility( visibility );
 	this->qvtk_vxl.ImageActor->SetVisibility( visibility );
+
+	this->qvtk_itk.SegmentedImageActor->SetVisibility( visibility );
+	this->qvtk_vtk.SegmentedActor->SetVisibility( visibility );
+	//this->qvtk_vtk.SegmentedImageActor->SetVisibility( visibility );
+	//this->qvtk_vxl.SegmentedImageActor->SetVisibility( visibility );
+	
 
 	if (reset_camera)
 	{
@@ -148,4 +188,62 @@ void QtImgSegment::renderAll( int visibility, bool reset_camera )
 	this->qvtk_itk.RenWin->Render();
 	this->qvtk_vtk.RenWin->Render();
 	this->qvtk_vxl.RenWin->Render();
+}
+
+void QtImgSegment::slotITKthresh( int value )
+{
+	this->itkFilter->SetThreshold( (float) value );
+	UpdateITKImage();
+}
+
+void QtImgSegment::slotITKvar( int value )
+{
+	this->itkFilter->SetVariance( (float) value*10.0/100 );
+	UpdateITKImage();
+}
+
+void QtImgSegment::UpdateITKImage( bool reset_camera )
+{
+	this->qvtk_itk.AddSegmentedImageActor( this->itkFilter->GetOutput() );
+	if (reset_camera)
+	{
+		this->qvtk_itk.Ren->ResetCamera();
+	}
+	this->qvtk_itk.RenWin->Render();
+}
+
+void QtImgSegment::slotVTKradius( int value )
+{
+	double x[3];
+	x[2] = 0;
+	x[1] = (double) (this->horizontalSlider_radiusy->value());
+	x[0] = (double) (this->horizontalSlider_radiusx->value());
+	this->vtkFilter->SetRadius( x );
+	this->UpdateVTKImage();
+}
+
+void QtImgSegment::slotVTKstddev( int value )
+{
+	double x[3];
+	x[2] = 0;
+	x[1] = (double) (this->horizontalSlider_stdy->value());
+	x[0] = (double) (this->horizontalSlider_stdx->value());
+	this->vtkFilter->SetStdDev( x );
+	this->UpdateVTKImage();
+}
+
+void QtImgSegment::slotVTKthresh( int value )
+{
+	this->vtkFilter->SetThreshold( (double) value );
+	this->UpdateVTKImage();
+}
+
+void QtImgSegment::UpdateVTKImage( bool reset_camera )
+{
+	this->qvtk_vtk.AddSegmentedActor( this->vtkFilter->getOutputActor() );
+	if (reset_camera)
+	{
+		this->qvtk_vtk.Ren->ResetCamera();
+	}
+	this->qvtk_vtk.RenWin->Render();
 }

@@ -4,6 +4,8 @@
 #include "ui_QtImgSegment.h"
 #include "RenderBase.h"
 #include "utils.h"
+#include "itkImgFilter.h"
+#include "vtkImgFilter.h"
 
 #include <vtkEventQtSlotConnect.h>
 #include <vtkImageActor.h>
@@ -26,9 +28,14 @@ public:
 	//vtkSmartPointer<vtkImageActor> ImageActor;
 	//void displayImage( bool reset_camera = false );
 	//vcl_string fname;
-	//IMPROC::baseFilter::RGBImageType::ConstPointer CurrentImg;
-	//IMPROC::baseFilter::RGBImageType::ConstPointer SegmentedImg;
+	//IMPROC::baseFilter::RGBImageType::Pointer CurrentImg;
+	//IMPROC::baseFilter::RGBImageType::Pointer SegmentedImg;
 	void renderAll( int visibility = 1, bool reset_camera = false );
+
+	itkImgFilter *itkFilter;
+	vtkImgFilter *vtkFilter;
+	void UpdateITKImage( const bool reset_camera = false );
+	void UpdateVTKImage( const bool reset_camera = false );
 	
 public slots:
 
@@ -38,6 +45,11 @@ public slots:
 	void closeEvent(QCloseEvent* Event);
 	void slotCloseImage( void );
 	void slotSaveImage( void );
+	void slotITKthresh( int value );
+	void slotITKvar( int value );
+	void slotVTKradius( int value );
+	void slotVTKstddev( int value );
+	void slotVTKthresh( int value );
 	
 protected:
 
@@ -47,7 +59,6 @@ protected:
 	RenderImage qvtk_itk;
 	RenderImage qvtk_vtk;
 	RenderImage qvtk_vxl;
-	UTILS::ReaderType::Pointer imageReader;
 };
 
 #endif // __QTIMGSEGMENT_H__
