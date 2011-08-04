@@ -18,7 +18,9 @@ QtImgSegment::QtImgSegment() :
    Connections( vtkEventQtSlotConnect::New() ),
    itkFilter( NULL ),
    vtkFilter( NULL ),
-   vxlFilter( NULL )
+   vxlFilter( NULL ),
+   img_rows( 0 ),
+   img_cols( 0 )
 {
 	this->setupUi(this);
 
@@ -82,31 +84,36 @@ void QtImgSegment::slotSetWorkingDirectory()
 
 void QtImgSegment::slotLoadImage( void )
 {
-   //File open dialog
-   QString filename;
-   filename = QFileDialog::getOpenFileName( this, "Open Image", this->workingDir, "Image Files (*.bmp *.jpg *.png *.hdr *.img )" );
-   if (filename.isNull())
-      return;
+	//File open dialog
+	QString filename;
+	filename = QFileDialog::getOpenFileName( this, "Open Image", this->workingDir, "Image Files (*.bmp *.jpg *.png *.hdr *.img )" );
+	if (filename.isNull())
+	  return;
 
-   vcl_string fname( filename.toAscii().data() );
-   vcl_cout << vcl_endl << "Loading Image file: " << fname << vcl_endl;
-   UTILS::ReaderType::Pointer imageReader = UTILS::ReaderType::New();
-   imageReader->SetFileName( fname );
-   try
+	vcl_string fname( filename.toAscii().data() );
+	vcl_cout << vcl_endl << "Loading Image file: " << fname << vcl_endl;
+	UTILS::ReaderType::Pointer imageReader = UTILS::ReaderType::New();
+	imageReader->SetFileName( fname );
+	
+	vcl_try
 	{
 		imageReader->Update();
-		//this->CurrentImg = imageReader->GetOutput();
 	}
-   catch( itk::ExceptionObject &err )
-   {
-      vcl_cout << vcl_endl
-               << "***" << vcl_endl
-               << "Exception caught:" << vcl_endl
-               << err << vcl_endl
-               << "***" << vcl_endl
-               << vcl_flush;
-      return;
-   }
+	vcl_catch( itk::ExceptionObject &err )
+	{
+	  vcl_cout << vcl_endl
+			   << "***" << vcl_endl
+			   << "Exception caught:" << vcl_endl
+			   << err << vcl_endl
+			   << "***" << vcl_endl
+			   << vcl_flush;
+	  return;
+	}
+   
+	this->img_rows = imageReader->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
+	this->img_cols = imageReader->GetOutput()->GetLargestPossibleRegion().GetSize()[0];
+	this->setSliders();
+
 	this->qvtk_original.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
 	this->qvtk_itk.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
 	this->qvtk_vtk.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
@@ -120,7 +127,6 @@ void QtImgSegment::slotLoadImage( void )
 	this->itkFilter->SetInput( fname );
 	this->slotITKthresh( this->horizontalSlider_thresh->value() );
 	this->slotITKvar( this->horizontalSlider_variance->value() );
-	//this->qvtk_itk.AddSegmentedImageActor( this->itkFilter->GetOutput() );
 	this->UpdateITKImage( true );
 
 	if ( !this->vtkFilter )
@@ -132,7 +138,6 @@ void QtImgSegment::slotLoadImage( void )
 	this->slotVTKradius( 0 );
 	this->slotVTKstddev( 0 );
 	this->slotVTKthresh( this->horizontalSlider_vtkthresh->value() );
-	//this->qvtk_vtk.AddSegmentedActor( this->vtkFilter->getOutputActor() );
 	this->UpdateVTKImage( true );
 
 	if( !this->vxlFilter )
@@ -143,7 +148,6 @@ void QtImgSegment::slotLoadImage( void )
 	this->qvtk_vxl.setBase( vxlFilter );
 	this->slotVXLNonMaxThresh( this->horizontalSlider_nonMaxthresh->value() );
 	this->slotVXLMagThresh( this->horizontalSlider_Magthresh->value() );
-	//this->qvtk_vxl.AddSegmentedImageActor( this->vxlFilter->GetOutput() );
 	this->UpdateVXLImage( true );
 
 	this->renderAll( 1, true );
@@ -176,6 +180,7 @@ void QtImgSegment::slotCloseImage( void )
 	this->actionLoad_Image->setEnabled( true );
 	this->actionClose_Image->setDisabled( true );
 	this->actionSave_Image->setDisabled( true );
+	this->resetSliders();
 }
 
 void QtImgSegment::renderAll( int visibility, bool reset_camera )
@@ -206,13 +211,17 @@ void QtImgSegment::renderAll( int visibility, bool reset_camera )
 
 void QtImgSegment::slotITKthresh( int value )
 {
+	if( !this->itkFilter )
+		return;
 	this->itkFilter->SetThreshold( (float) value );
 	UpdateITKImage();
 }
 
 void QtImgSegment::slotITKvar( int value )
 {
-	this->itkFilter->SetVariance( (float) value*10.0/100 );
+	if( !this->itkFilter )
+		return;
+	this->itkFilter->SetVariance( (float) value*0.05 );
 	UpdateITKImage();
 }
 
@@ -228,26 +237,32 @@ void QtImgSegment::UpdateITKImage( const bool reset_camera )
 
 void QtImgSegment::slotVTKradius( int value )
 {
+	if( !this->vtkFilter )
+		return;
 	double x[3];
 	x[2] = 0;
-	x[1] = (double) (this->horizontalSlider_radiusy->value());
-	x[0] = (double) (this->horizontalSlider_radiusx->value());
+	x[1] = (double) ((this->horizontalSlider_radiusy->value())*0.02);
+	x[0] = (double) ((this->horizontalSlider_radiusx->value())*0.02);
 	this->vtkFilter->SetRadius( x );
 	this->UpdateVTKImage();
 }
 
 void QtImgSegment::slotVTKstddev( int value )
 {
+	if( !this->vtkFilter )
+		return;
 	double x[3];
 	x[2] = 0;
-	x[1] = (double) (this->horizontalSlider_stdy->value());
-	x[0] = (double) (this->horizontalSlider_stdx->value());
+	x[1] = (double) ((this->horizontalSlider_stdy->value())*0.01);
+	x[0] = (double) ((this->horizontalSlider_stdx->value())*0.01);
 	this->vtkFilter->SetStdDev( x );
 	this->UpdateVTKImage();
 }
 
 void QtImgSegment::slotVTKthresh( int value )
 {
+	if( !this->vtkFilter )
+		return;
 	this->vtkFilter->SetThreshold( (double) value );
 	this->UpdateVTKImage();
 }
@@ -264,12 +279,16 @@ void QtImgSegment::UpdateVTKImage( const bool reset_camera )
 
 void QtImgSegment::slotVXLMagThresh(int value)
 {
+	if( !this->vxlFilter )
+		return;
 	this->vxlFilter->SetMagnitudeThreshold( (float) value );
 	this->UpdateVXLImage();
 }
 
 void QtImgSegment::slotVXLNonMaxThresh(int value)
 {
+	if( !this->vtkFilter )
+		return;
 	this->vxlFilter->SetNonMaxSuppressionThreshold((float) value );
 	this->UpdateVXLImage();
 }
@@ -282,4 +301,28 @@ void QtImgSegment::UpdateVXLImage( const bool reset_camera )
 		this->qvtk_vxl.Ren->ResetCamera();
 	}
 	this->qvtk_vxl.RenWin->Render();
+}
+
+void QtImgSegment::setSliders( void )
+{
+	unsigned val = (this->img_rows < this->img_cols) ? this->img_rows : this->img_cols;
+vcl_cout << "val " << val << vcl_endl << vcl_flush;
+	this->horizontalSlider_radiusx->setMaximum( val );
+	this->horizontalSlider_radiusy->setMaximum( val );
+	this->horizontalSlider_stdx->setMaximum( val );
+	this->horizontalSlider_stdy->setMaximum( val );
+	this->horizontalSlider_variance->setMaximum( val );
+}
+
+void QtImgSegment::resetSliders( void )
+{
+	this->horizontalSlider_radiusx->setValue( 1 );
+	this->horizontalSlider_radiusy->setValue( 1 );
+	this->horizontalSlider_stdx->setValue( 1 );
+	this->horizontalSlider_stdy->setValue( 1 );
+	this->horizontalSlider_variance->setValue( 1 );
+	this->horizontalSlider_Magthresh->setValue( 1 );
+	this->horizontalSlider_nonMaxthresh->setValue( 1 );
+	this->horizontalSlider_thresh->setValue( 1 );
+	this->horizontalSlider_vtkthresh->setValue( 1 );
 }

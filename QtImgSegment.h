@@ -18,6 +18,7 @@
 #include <vtkImageActor.h>
 
 #include <vcl_string.h>
+#include <vcl_exception.h>
 
 class vtkEventQtSlotConnect;
 class vtkObject;
@@ -27,18 +28,17 @@ class QtImgSegment : public QMainWindow, public Ui::MainWindow_SegmentationGUI
 {
 	Q_OBJECT
 
+		unsigned img_rows, img_cols;
 public:
 
 	QtImgSegment();
 	~QtImgSegment();
 	QString workingDir;
-	//vtkSmartPointer<vtkImageActor> ImageActor;
-	//void displayImage( bool reset_camera = false );
-	//vcl_string fname;
-	//IMPROC::baseFilter::RGBImageType::Pointer CurrentImg;
-	//IMPROC::baseFilter::RGBImageType::Pointer SegmentedImg;
-	void renderAll( int visibility = 1, bool reset_camera = false );
 
+	void renderAll( int visibility = 1, bool reset_camera = false );
+	void setSliders( void );
+	void resetSliders( void );
+	
 	itkImgFilter *itkFilter;
 	vtkImgFilter *vtkFilter;
 	vxlImgFilter *vxlFilter;
@@ -64,7 +64,6 @@ public slots:
 protected:
 
 	vtkEventQtSlotConnect* Connections;
-	//vtkSmartPointer<vtkRenderer> Ren;
 	RenderImage qvtk_original;
 	RenderImage qvtk_itk;
 	RenderImage qvtk_vtk;

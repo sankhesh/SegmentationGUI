@@ -10,6 +10,7 @@
 
 #include "utils.h"
 #include <vcl_string.h>
+#include <vcl_exception.h>
 
 class baseFilter
 {

@@ -23,7 +23,20 @@ void itkImgFilter::setFilterInput(const std::string &filename)
 
 vtkSmartPointer<vtkImageActor> itkImgFilter::getFilterOutput( void )
 {
-	this->cannyFilter->Update();
+	vcl_try
+	{
+		this->cannyFilter->Update();
+	}
+	vcl_catch (itk::ExceptionObject &err)
+	{
+		vcl_cout << vcl_endl
+               << "***" << vcl_endl
+               << "Exception caught:" << vcl_endl
+               << err << vcl_endl
+               << "***" << vcl_endl
+               << vcl_flush;
+		return NULL;
+	}
 	UTILS::ScalarImageType::Pointer img = this->cannyFilter->GetOutput();
 	return UTILS::ITKToVTKConvert( UTILS::ComposeRGBImage( img ) );
 }

@@ -28,12 +28,14 @@ vtkImgFilter::vtkImgFilter() :
 	mapper( vtkSmartPointer<vtkPolyDataMapper>::New() ),
 	outputActor( vtkSmartPointer<vtkActor>::New() )
 {
+	
+	
 	castFilter->SetOutputScalarTypeToFloat();
 	castFilter->SetInputConnection( luminanceFilter->GetOutputPort() );
 	
 	gaussianFilter->SetDimensionality( 2 );
 	gaussianFilter->SetInputConnection( castFilter->GetOutputPort() );
-	
+
 	gradientFilter->SetDimensionality( 2 );
 	gradientFilter->SetInputConnection( gaussianFilter->GetOutputPort() );
 
@@ -89,7 +91,7 @@ vtkSmartPointer<vtkActor> vtkImgFilter::getOutputActor( void )
 
 vtkSmartPointer<vtkImageActor> vtkImgFilter::getFilterOutput( void )
 {
-	return vtkSmartPointer<vtkImageActor>::New();
+	return NULL;
 }
 
 void vtkImgFilter::SetRadius( double x[3] )
