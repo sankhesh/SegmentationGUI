@@ -23,7 +23,7 @@ class RenderBase
 {
 public:
 	RenderBase();
-	~RenderBase(){}
+	virtual ~RenderBase(){}
 	vtkSmartPointer<vtkRenderer> Ren;
 	vtkSmartPointer<vtkRenderWindow> RenWin;
 	
@@ -35,7 +35,6 @@ class RenderImage : public RenderBase
 	vtkSmartPointer<vtkInteractorStyleImage> style;
 public:
 	RenderImage();
-	~RenderImage(){}
 	vtkSmartPointer<vtkImageActor> ImageActor;
 	vtkSmartPointer<vtkImageActor> SegmentedImageActor;
 	vtkSmartPointer<vtkActor> SegmentedActor;
