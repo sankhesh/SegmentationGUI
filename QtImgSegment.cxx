@@ -49,7 +49,6 @@ QtImgSegment::QtImgSegment() :
 	connect(this->horizontalSlider_vtkthresh,SIGNAL(valueChanged(int)),this,SLOT(slotVTKthresh(int)));
 	connect(this->horizontalSlider_nonMaxthresh,SIGNAL(valueChanged(int)),this,SLOT(slotVXLNonMaxThresh(int)));
 	connect(this->horizontalSlider_Magthresh,SIGNAL(valueChanged(int)),this,SLOT(slotVXLMagThresh(int)));
-   // connect(this->actionInstructions,SIGNAL(triggered()),this,SLOT(showInstructions()));	   
 }
 
 //Destructor
@@ -75,12 +74,6 @@ void QtImgSegment::slotSetWorkingDirectory()
    this->workingDir = QFileDialog::getExistingDirectory( this, "Set Working Directory", this->workingDir, QFileDialog::ShowDirsOnly );
    vcl_cout << "Working directory set to " << workingDir.toAscii().data() << vcl_endl << vcl_flush;
 }
-
-// void QtImgSegment::showInstructions()
-// {
-   // instructions *showi = new instructions;
-   // showi->show();
-// }
 
 void QtImgSegment::slotLoadImage( void )
 {

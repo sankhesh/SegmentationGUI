@@ -50,7 +50,6 @@ public slots:
 
 	void slotLoadImage( void );
 	void slotSetWorkingDirectory( void );
-	// void showInstructions();
 	void closeEvent(QCloseEvent* Event);
 	void slotCloseImage( void );
 	void slotITKthresh( int value );
