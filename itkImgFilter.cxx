@@ -1,5 +1,10 @@
-#include "itkImgFilter.h"
+/**
+  * \file: itkImgFilter.cxx
+  * \author: Sankhesh Jhaveri
+  * \brief: defines itkImgFilter class
+**/
 
+#include "itkImgFilter.h"
 
 //Constructor
 itkImgFilter::itkImgFilter() :

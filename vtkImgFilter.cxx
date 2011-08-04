@@ -1,3 +1,9 @@
+/**
+  * \file: vtkImgFilter.cxx
+  * \author: Sankhesh Jhaveri
+  * \brief: defines vtkImgFilter class
+**/
+
 #include "vtkImgFilter.h"
 
 

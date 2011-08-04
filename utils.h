@@ -1,7 +1,11 @@
+/**
+  * \file: utils.h
+  * \author: Sankhesh Jhaveri
+  * \brief: declares UTILS namespace
+**/
+
 #ifndef _UTILS_H_
 #define _UTILS_H_
-
-//#include "Imageproc/baseFilter.h"
 
 #include <vcl_string.h>
 
@@ -19,7 +23,8 @@ namespace UTILS {
 typedef itk::RGBPixel< unsigned char > PixelType;
 typedef itk::Image< PixelType, 2 > RGBImageType;
 typedef itk::ImageFileReader< RGBImageType > ReaderType;
-typedef itk::Image< double, 2 > ScalarImageType;
+typedef double ScalarPixelType;
+typedef itk::Image< ScalarPixelType, 2 > ScalarImageType;
 
 
 void redirectVTKWarnings( const vcl_string &fname );

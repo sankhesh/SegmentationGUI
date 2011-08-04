@@ -6,6 +6,13 @@ cmake_minimum_required(VERSION 2.8)
 FIND_PACKAGE(VXL REQUIRED)
 INCLUDE(${VXL_CMAKE_DIR}/UseVXL.cmake)
 MESSAGE(STATUS "Including <${VXL_CMAKE_DIR}/UseVXL.cmake>" )
+INCLUDE_DIRECTORIES(
+  ${VXLCORE_INCLUDE_DIR}
+  ${GEL_INCLUDE_DIR}
+)
+# See VXL/config/cmake/Modules/UseVXL.cmake for all the params
+INCLUDE_DIRECTORIES( ${VXL_GEL_INCLUDE_DIR}/mrc )
+MESSAGE(STATUS "Library path for VXL <${VXL_LIBRARY_DIR}>" )
 
 FIND_PACKAGE(ITK REQUIRED)
 INCLUDE(${ITK_USE_FILE})
@@ -13,7 +20,6 @@ MESSAGE(STATUS "Using <${ITK_USE_FILE}>" )
 IF( ${ITK_USE_SYSTEM_VXL} )
    MESSAGE(STATUS "Using VXL from <${VXL_DIR}> for ITK" )
 ELSE( ${ITK_USE_SYSTEM_VXL} )
-#   MESSAGE( FATAL_ERROR "ITK_USE_SYSTEM_VXL must be true in ITK build" )
    MESSAGE( "Please ensure that ITK_USE_SYSTEM_VXL is true in ITK build" )
 ENDIF( ${ITK_USE_SYSTEM_VXL} )
 
@@ -22,14 +28,6 @@ FIND_PATH( ITK_SOURCE_DIR "CMakeLists.txt" )
 SET ( ITKVTKGLUE_PATH "${ITK_SOURCE_DIR}/Wrapping/WrapITK/ExternalProjects/ItkVtkGlue/src" )
 INCLUDE_DIRECTORIES(${ITKVTKGLUE_PATH})
 MESSAGE(STATUS "Including <${ITKVTKGLUE_PATH}> as path for ItkVtkGlue" )
-
-#SET( ITKSYSTARGET
-#  ${CMAKE_SHARED_LIBRARY_PREFIX}itksys-4.0${CMAKE_SHARED_LIBRARY_SUFFIX}
-#)
-#FIND_PATH( ITK_LIBRARY_DIRS ITKSYSTARGET REQUIRED )
-# SET( ITK_LIBRARY_DIRS ${ITK_DIR} )
-# MESSAGE( "Using <${ITK_LIBRARY_DIRS}> as path for <${ITKSYSTARGET}>" )
-
 
 FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
@@ -45,7 +43,6 @@ MESSAGE(STATUS "Using <${QT_LIBRARY_DIRS}> as path for <${QTCORETARGET}>" )
 FIND_PACKAGE(VTK REQUIRED)
 INCLUDE(${VTK_USE_FILE})
 MESSAGE(STATUS "Using <${VTK_USE_FILE}>" )
-
 
 INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -63,6 +60,7 @@ SET( Sources
 		baseFilter.cxx
 		itkImgFilter.cxx
 		vtkImgFilter.cxx
+		vxlImgFilter.cxx
 )
 
 SET( MOCInputs
@@ -73,6 +71,7 @@ SET( MOCInputs
 		baseFilter.h
 		itkImgFilter.h
 		vtkImgFilter.h
+		vxlImgFilter.h
 )
 
 SET( UIInputs
@@ -91,11 +90,6 @@ SOURCE_GROUP( "UI" FILES ${UIInputs} )
 SOURCE_GROUP( "Generated" FILES ${MOCSources} ${UISources} ${Resources} )
 SOURCE_GROUP( "QtResource" FILES ${ResourceFiles} )
 
-
-# See VXL/config/cmake/Modules/UseVXL.cmake for all the params
-INCLUDE_DIRECTORIES( ${VXL_GEL_INCLUDE_DIR}/mrc )
-MESSAGE(STATUS "Library path for VXL <${VXL_LIBRARY_DIR}>" )
-
 ADD_LIBRARY( gui 
   ${Sources}
   ${MOCInputs}
@@ -104,7 +98,7 @@ ADD_LIBRARY( gui
 )
 
 TARGET_LINK_LIBRARIES( gui
-					vnl vnl_algo vcl vgl vpgl vpgl_algo
+					vnl vnl_algo vcl vil vil_algo
 					QVTK vtkHybrid
 					${QT_LIBRARIES}
 					${ITK_LIBRARIES}

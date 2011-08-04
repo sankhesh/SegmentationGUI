@@ -1,3 +1,9 @@
+/**
+  * \file: vtkImgFilter.h
+  * \author: Sankhesh Jhaveri
+  * \brief: declares vtkImgFilter class
+**/
+
 #ifndef _VTKIMGFILTER_H_
 #define _VTKIMGFILTER_H_
 

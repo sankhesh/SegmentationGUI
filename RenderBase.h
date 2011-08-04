@@ -1,7 +1,7 @@
 /**
   * \file: RenderBase.h
   * \author: Sankhesh Jhaveri
-  * \brief: declares render base class
+  * \brief: declares render base and renderImage classes
 **/
 
 #ifndef __RENDERBASE_H__
@@ -43,7 +43,6 @@ public:
 	virtual void AddRenderWindow( vtkSmartPointer<vtkRenderWindow> );
 	void AddImageActor( vtkSmartPointer<vtkImageActor> actor );
 	void AddSegmentedImageActor( vtkSmartPointer<vtkImageActor> actor );
-	void WriteSegmentedImage( const char * name);
 	void AddSegmentedActor( vtkSmartPointer<vtkActor> actor );
 	
 	baseFilter *base;

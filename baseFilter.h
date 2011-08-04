@@ -1,3 +1,10 @@
+/**
+  * \file: baseFilter.cxx
+  * \author: Sankhesh Jhaveri
+  * \brief: declares baseFilter class. Abstract base class that defines input/output methods
+  *			for filtration operations.
+**/
+
 #ifndef _BASEFILTER_H_
 #define _BASEFILTER_H_
 

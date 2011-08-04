@@ -1,7 +1,7 @@
 /**
   * \file: RenderBase.cxx
   * \author: Sankhesh Jhaveri
-  * \brief: defines render base class
+  * \brief: defines render base and render Image classes
 **/
 
 #include "RenderBase.h"
@@ -48,14 +48,6 @@ void RenderImage::AddSegmentedImageActor( vtkSmartPointer<vtkImageActor> actor )
 void RenderImage::setBase( baseFilter *baseF )
 {
 	this->base = baseF;
-}
-
-void RenderImage::WriteSegmentedImage( const char *name )
-{
-	vtkSmartPointer<vtkImageWriter> writer = vtkSmartPointer<vtkImageWriter>::New();
-	writer->SetFileName( name );
-	writer->SetInput( this->SegmentedImageActor->GetInput() );
-	writer->Update();
 }
 
 void RenderImage::AddSegmentedActor( vtkSmartPointer<vtkActor> actor )

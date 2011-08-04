@@ -1,3 +1,9 @@
+/**
+  * \file: utils.cxx
+  * \author: Sankhesh Jhaveri
+  * \brief: defines UTILS namespace functions
+**/
+
 #include "utils.h"
 #include <itkComposeRGBImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>

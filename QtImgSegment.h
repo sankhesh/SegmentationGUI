@@ -1,3 +1,9 @@
+/**
+  * \file: QtImgSegment.h
+  * \author: Sankhesh Jhaveri
+  * \brief: declares QtImgSegment class. This is the main GUI class that handles all connections.
+**/
+
 #ifndef __QTIMGSEGMENT_H__
 #define __QTIMGSEGMENT_H__
 
@@ -6,6 +12,7 @@
 #include "utils.h"
 #include "itkImgFilter.h"
 #include "vtkImgFilter.h"
+#include "vxlImgFilter.h"
 
 #include <vtkEventQtSlotConnect.h>
 #include <vtkImageActor.h>
@@ -34,8 +41,10 @@ public:
 
 	itkImgFilter *itkFilter;
 	vtkImgFilter *vtkFilter;
+	vxlImgFilter *vxlFilter;
 	void UpdateITKImage( const bool reset_camera = false );
 	void UpdateVTKImage( const bool reset_camera = false );
+	void UpdateVXLImage( const bool reset_camera = false );
 	
 public slots:
 
@@ -44,13 +53,14 @@ public slots:
 	// void showInstructions();
 	void closeEvent(QCloseEvent* Event);
 	void slotCloseImage( void );
-	void slotSaveImage( void );
 	void slotITKthresh( int value );
 	void slotITKvar( int value );
 	void slotVTKradius( int value );
 	void slotVTKstddev( int value );
 	void slotVTKthresh( int value );
-	
+	void slotVXLNonMaxThresh( int value );
+	void slotVXLMagThresh( int value );
+
 protected:
 
 	vtkEventQtSlotConnect* Connections;

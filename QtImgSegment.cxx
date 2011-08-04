@@ -1,3 +1,9 @@
+/**
+  * \file: QtImgSegment.cxx
+  * \author: Sankhesh Jhaveri
+  * \brief: defines QtImgSegment class
+**/
+
 #include "QtImgSegment.h"
 
 #include <qfiledialog.h>
@@ -9,14 +15,10 @@
 //Constructor
 QtImgSegment::QtImgSegment() :
    workingDir( "." ),
-   //fname(""),
    Connections( vtkEventQtSlotConnect::New() ),
    itkFilter( NULL ),
-   vtkFilter( NULL )
-   //ImageActor( NULL ),
-   //Ren( vtkSmartPointer<vtkRenderer>::New() ),
-   //CurrentImg( NULL ),
-   //SegmentedImg( NULL )
+   vtkFilter( NULL ),
+   vxlFilter( NULL )
 {
 	this->setupUi(this);
 
@@ -30,13 +32,12 @@ QtImgSegment::QtImgSegment() :
 	this->qvtk_vtk.AddRenderWindow( this->qvtkwidget_segmentedVTK->GetRenderWindow() );
 	this->qvtk_vxl.AddRenderWindow( this->qvtkwidget_segmentedVXL->GetRenderWindow() );
 
-	//this->renderAll(0,true);
+	this->renderAll(0,true);
 
 	connect(this->actionExit,SIGNAL(triggered()),qApp,SLOT(closeAllWindows()));
 	connect(this->actionLoad_Image,SIGNAL(triggered()),this,SLOT(slotLoadImage()));
 	connect(this->actionSet_Working_Directory,SIGNAL(triggered()),this,SLOT(slotSetWorkingDirectory()));
 	connect(this->actionClose_Image,SIGNAL(triggered()),this,SLOT(slotCloseImage()));
-	connect(this->actionSave_Image,SIGNAL(triggered()),this,SLOT(slotSaveImage()));
 	connect(this->horizontalSlider_thresh,SIGNAL(valueChanged(int)),this,SLOT(slotITKthresh(int)));
 	connect(this->horizontalSlider_variance,SIGNAL(valueChanged(int)),this,SLOT(slotITKvar(int)));
 	connect(this->horizontalSlider_radiusx,SIGNAL(valueChanged(int)),this,SLOT(slotVTKradius(int)));
@@ -44,6 +45,8 @@ QtImgSegment::QtImgSegment() :
 	connect(this->horizontalSlider_stdx,SIGNAL(valueChanged(int)),this,SLOT(slotVTKstddev(int)));
 	connect(this->horizontalSlider_stdy,SIGNAL(valueChanged(int)),this,SLOT(slotVTKstddev(int)));
 	connect(this->horizontalSlider_vtkthresh,SIGNAL(valueChanged(int)),this,SLOT(slotVTKthresh(int)));
+	connect(this->horizontalSlider_nonMaxthresh,SIGNAL(valueChanged(int)),this,SLOT(slotVXLNonMaxThresh(int)));
+	connect(this->horizontalSlider_Magthresh,SIGNAL(valueChanged(int)),this,SLOT(slotVXLMagThresh(int)));
    // connect(this->actionInstructions,SIGNAL(triggered()),this,SLOT(showInstructions()));	   
 }
 
@@ -58,6 +61,10 @@ QtImgSegment::~QtImgSegment()
    if( this->vtkFilter )
    {
 	   delete this->vtkFilter;
+   }
+   if( this->vxlFilter )
+   {
+	   delete this->vxlFilter;
    }
 }
 
@@ -105,26 +112,39 @@ void QtImgSegment::slotLoadImage( void )
 	this->qvtk_vtk.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
 	this->qvtk_vxl.AddImageActor( UTILS::ITKToVTKConvert( imageReader->GetOutput() ));
 
-	if (! this->itkFilter )
+	if ( !this->itkFilter )
 	{
-		itkFilter = new itkImgFilter;
+		this->itkFilter = new itkImgFilter;
 	}
 	this->qvtk_itk.setBase( itkFilter );
 	this->itkFilter->SetInput( fname );
 	this->slotITKthresh( this->horizontalSlider_thresh->value() );
 	this->slotITKvar( this->horizontalSlider_variance->value() );
-	this->qvtk_itk.AddSegmentedImageActor( this->itkFilter->GetOutput() );
+	//this->qvtk_itk.AddSegmentedImageActor( this->itkFilter->GetOutput() );
+	this->UpdateITKImage( true );
 
-	if (! this->vtkFilter )
+	if ( !this->vtkFilter )
 	{
-		vtkFilter = new vtkImgFilter;
+		this->vtkFilter = new vtkImgFilter;
 	}
 	this->qvtk_vtk.setBase( vtkFilter );
 	this->vtkFilter->SetInput( fname );
 	this->slotVTKradius( 0 );
 	this->slotVTKstddev( 0 );
 	this->slotVTKthresh( this->horizontalSlider_vtkthresh->value() );
-	this->qvtk_vtk.AddSegmentedActor( this->vtkFilter->getOutputActor() );
+	//this->qvtk_vtk.AddSegmentedActor( this->vtkFilter->getOutputActor() );
+	this->UpdateVTKImage( true );
+
+	if( !this->vxlFilter )
+	{
+		this->vxlFilter = new vxlImgFilter;
+	}
+	this->vxlFilter->SetInput( fname );
+	this->qvtk_vxl.setBase( vxlFilter );
+	this->slotVXLNonMaxThresh( this->horizontalSlider_nonMaxthresh->value() );
+	this->slotVXLMagThresh( this->horizontalSlider_Magthresh->value() );
+	//this->qvtk_vxl.AddSegmentedImageActor( this->vxlFilter->GetOutput() );
+	this->UpdateVXLImage( true );
 
 	this->renderAll( 1, true );
 
@@ -149,18 +169,13 @@ void QtImgSegment::slotCloseImage( void )
 	{
 		this->vtkFilter = NULL;
 	}
+	if ( this->vxlFilter )
+	{
+		this->vxlFilter = NULL;
+	}
 	this->actionLoad_Image->setEnabled( true );
 	this->actionClose_Image->setDisabled( true );
 	this->actionSave_Image->setDisabled( true );
-}
-
-void QtImgSegment::slotSaveImage( void )
-{
-	QString filename;
-	filename = QFileDialog::getSaveFileName( this, "Save Segmented Image as ", this->workingDir, "Image Files (*.bmp *.jpg *.png *.hdr *.img)" );
-	if (filename.isNull())
-      return;
-	this->qvtk_itk.WriteSegmentedImage( filename.toAscii().data() );
 }
 
 void QtImgSegment::renderAll( int visibility, bool reset_camera )
@@ -172,8 +187,7 @@ void QtImgSegment::renderAll( int visibility, bool reset_camera )
 
 	this->qvtk_itk.SegmentedImageActor->SetVisibility( visibility );
 	this->qvtk_vtk.SegmentedActor->SetVisibility( visibility );
-	//this->qvtk_vtk.SegmentedImageActor->SetVisibility( visibility );
-	//this->qvtk_vxl.SegmentedImageActor->SetVisibility( visibility );
+	this->qvtk_vxl.SegmentedImageActor->SetVisibility( visibility );
 	
 
 	if (reset_camera)
@@ -202,7 +216,7 @@ void QtImgSegment::slotITKvar( int value )
 	UpdateITKImage();
 }
 
-void QtImgSegment::UpdateITKImage( bool reset_camera )
+void QtImgSegment::UpdateITKImage( const bool reset_camera )
 {
 	this->qvtk_itk.AddSegmentedImageActor( this->itkFilter->GetOutput() );
 	if (reset_camera)
@@ -238,7 +252,7 @@ void QtImgSegment::slotVTKthresh( int value )
 	this->UpdateVTKImage();
 }
 
-void QtImgSegment::UpdateVTKImage( bool reset_camera )
+void QtImgSegment::UpdateVTKImage( const bool reset_camera )
 {
 	this->qvtk_vtk.AddSegmentedActor( this->vtkFilter->getOutputActor() );
 	if (reset_camera)
@@ -246,4 +260,26 @@ void QtImgSegment::UpdateVTKImage( bool reset_camera )
 		this->qvtk_vtk.Ren->ResetCamera();
 	}
 	this->qvtk_vtk.RenWin->Render();
+}
+
+void QtImgSegment::slotVXLMagThresh(int value)
+{
+	this->vxlFilter->SetMagnitudeThreshold( (float) value );
+	this->UpdateVXLImage();
+}
+
+void QtImgSegment::slotVXLNonMaxThresh(int value)
+{
+	this->vxlFilter->SetNonMaxSuppressionThreshold((float) value );
+	this->UpdateVXLImage();
+}
+
+void QtImgSegment::UpdateVXLImage( const bool reset_camera )
+{
+	this->qvtk_vxl.AddSegmentedImageActor( this->vxlFilter->GetOutput() );
+	if (reset_camera)
+	{
+		this->qvtk_vxl.Ren->ResetCamera();
+	}
+	this->qvtk_vxl.RenWin->Render();
 }

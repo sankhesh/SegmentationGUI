@@ -1,3 +1,10 @@
+/**
+  * \file: itkImgFilter.h
+  * \author: Sankhesh Jhaveri
+  * \brief: declares itkImgFilter class. This class reads an ITK image, performs edge detection 
+  *			and returns a VTK Image Actor
+**/
+
 #ifndef _ITKIMGFILTER_H_
 #define _ITKIMGFILTER_H_
 

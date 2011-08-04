@@ -1,3 +1,9 @@
+/**
+  * \file: baseFilter.cxx
+  * \author: Sankhesh Jhaveri
+  * \brief: defines baseFilter class
+**/
+
 #include "baseFilter.h"
 
 void baseFilter::SetInput( const vcl_string &filename )
