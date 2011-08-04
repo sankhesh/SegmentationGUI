@@ -306,7 +306,6 @@ void QtImgSegment::UpdateVXLImage( const bool reset_camera )
 void QtImgSegment::setSliders( void )
 {
 	unsigned val = (this->img_rows < this->img_cols) ? this->img_rows : this->img_cols;
-vcl_cout << "val " << val << vcl_endl << vcl_flush;
 	this->horizontalSlider_radiusx->setMaximum( val );
 	this->horizontalSlider_radiusy->setMaximum( val );
 	this->horizontalSlider_stdx->setMaximum( val );
