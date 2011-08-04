@@ -15,10 +15,10 @@
 
 //Constructor
 vxlImgFilter::vxlImgFilter() :
-	inputImage(),
-	internalImage(),
 	thresh1( 1.0f ),
-	thresh2( 1.0f )
+	thresh2( 1.0f ),
+	inputImage(),
+	internalImage()
 {
 }
 

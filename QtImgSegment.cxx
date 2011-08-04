@@ -14,13 +14,13 @@
 
 //Constructor
 QtImgSegment::QtImgSegment() :
+   img_rows( 0 ),
+   img_cols( 0 ),
    workingDir( "." ),
    Connections( vtkEventQtSlotConnect::New() ),
    itkFilter( NULL ),
    vtkFilter( NULL ),
-   vxlFilter( NULL ),
-   img_rows( 0 ),
-   img_cols( 0 )
+   vxlFilter( NULL )
 {
 	this->setupUi(this);
 
